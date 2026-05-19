@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { authHeaders, clearToken, getUser, isAuthenticated, setUser, AuthUser } from "@/lib/auth";
-import type { RoadmapData, OnboardingFormData } from "@/types";
+import type { RoadmapData, OnboardingFormData, RoadmapResource } from "@/types";
 import { STAGE_COLORS, getResourceUrl } from "@/lib/constants";
 import { ProfileEditForm } from "@/components/ProfileEditForm";
 import { RoadmapVisual, RoadmapVisualButton } from "@/components/RoadmapVisual";
@@ -346,13 +346,17 @@ const Profile = () => {
                           ))}
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          {stage.resources.map((r) => (
-                            <a key={r} href={getResourceUrl(r)} target="_blank" rel="noopener noreferrer">
-                              <Badge variant="outline" className="text-xs gap-1 hover:border-primary hover:text-primary transition-colors cursor-pointer">
-                                {r} <ExternalLink className="w-2.5 h-2.5" />
-                              </Badge>
-                            </a>
-                          ))}
+                          {stage.resources.filter(Boolean).map((r, i) => {
+                            const name = typeof r === "string" ? r : (r as RoadmapResource).name ?? "";
+                            if (!name) return null;
+                            return (
+                              <a key={i} href={getResourceUrl(name)} target="_blank" rel="noopener noreferrer">
+                                <Badge variant="outline" className="text-xs gap-1 hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                                  {name} <ExternalLink className="w-2.5 h-2.5" />
+                                </Badge>
+                              </a>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>

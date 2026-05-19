@@ -36,6 +36,34 @@ const DAYS_OPTIONS = [
 
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
+const DAYS_COUNT: Record<string, number> = {
+  "Ежедневно": 7,
+  "Пн-Пт": 5,
+  "Пн/Ср/Пт": 3,
+  "Вт/Чт": 2,
+  "Вт/Чт/Сб": 3,
+  "Только выходные": 2,
+  "Сб-Вс": 2,
+  "Только суббота": 1,
+  "Только воскресенье": 1,
+};
+
+const toMinutes = (t: string): number => {
+  const [h, m] = t.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+
+const calcBusyHours = (items: ScheduleItem[]): number => {
+  let total = 0;
+  for (const item of items) {
+    const from = toMinutes(item.from);
+    const to = toMinutes(item.to);
+    const duration = to > from ? to - from : 24 * 60 - from + to;
+    total += duration * (DAYS_COUNT[item.days] ?? 7);
+  }
+  return Math.round(total / 60);
+};
+
 export const ScheduleStep = ({ data, onChange }: ScheduleStepProps) => {
   const items = data.scheduleItems || [];
 
@@ -170,6 +198,32 @@ export const ScheduleStep = ({ data, onChange }: ScheduleStepProps) => {
           <Plus className="w-4 h-4" />
           Добавить свою занятость
         </Button>
+
+        {/* Free hours summary */}
+        {items.length > 0 && (() => {
+          const busy = calcBusyHours(items);
+          const free = Math.max(0, 168 - busy);
+          return (
+            <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" /> Всего в неделе
+                </span>
+                <span className="font-medium text-foreground">168 ч</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Занято по расписанию</span>
+                <span className="font-medium text-foreground">−{busy} ч</span>
+              </div>
+              <div className="border-t border-border/60 pt-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">Свободно для учёбы</span>
+                <span className={`text-lg font-bold ${free >= 10 ? "text-emerald-500" : free >= 5 ? "text-amber-500" : "text-destructive"}`}>
+                  {free} ч/нед
+                </span>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Empty hint */}
         {items.length === 0 && (

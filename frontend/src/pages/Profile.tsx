@@ -59,6 +59,7 @@ const Profile = () => {
   const [editFormOpen, setEditFormOpen] = useState(false);
   const [visualOpen, setVisualOpen] = useState(false);
   const [directRecalculating, setDirectRecalculating] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const progressSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Load user ──────────────────────────────────────────────────────────────
@@ -66,13 +67,25 @@ const Profile = () => {
   useEffect(() => {
     if (!isAuthenticated()) { navigate("/"); return; }
     fetch("/api/me", { headers: authHeaders() })
-      .then((r) => r.json())
+      .then((r) => {
+        if (r.status === 401 || r.status === 403) {
+          clearToken();
+          navigate("/");
+          return null;
+        }
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data) => {
+        if (!data) return;
         setUserData(data);
         setCompletedStages(data.completed_stages || []);
         setNameInput(data.name || "");
       })
-      .catch(console.error)
+      .catch((e) => {
+        console.error("[profile] load error:", e);
+        setLoadError("Не удалось загрузить профиль. Проверьте соединение и попробуйте снова.");
+      })
       .finally(() => setLoading(false));
   }, [navigate]);
 
@@ -146,6 +159,15 @@ const Profile = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         <Sparkles className="w-5 h-5 animate-pulse text-primary mr-2" /> Загрузка кабинета...
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center gap-4">
+        <p className="text-muted-foreground">{loadError}</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>Обновить</Button>
       </div>
     );
   }

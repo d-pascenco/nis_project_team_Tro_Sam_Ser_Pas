@@ -9,3 +9,4 @@ __pycache__/
 !backend/.env.example
 venv/
 backend/venv/
+.idea/

@@ -76,9 +76,9 @@ After=network.target postgresql.service
 [Service]
 User=ubuntu
 Group=ubuntu
-WorkingDirectory=/home/ubuntu/project_nis/backend
-EnvironmentFile=/home/ubuntu/project_nis/.env
-ExecStart=/home/ubuntu/project_nis/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+WorkingDirectory=/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas/backend
+EnvironmentFile=/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas/.env
+ExecStart=/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 Restart=always
 RestartSec=5
 ```

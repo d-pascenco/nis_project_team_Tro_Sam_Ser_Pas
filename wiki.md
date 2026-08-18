@@ -229,23 +229,23 @@ http://<наш_ip_инстанса>
 
 ## 7. Пулим и собираем проект сайта
 Репозиторий:
-https://github.com/d-pascenco/project_nis.git
+https://github.com/d-pascenco/nis_project_team_Tro_Sam_Ser_Pas.git
 
 ### 7.1 Переходим в домашнюю папку и клонируем проект из репозитория:
 ```bash
 cd ~
-git clone https://github.com/d-pascenco/project_nis.git
+git clone https://github.com/d-pascenco/nis_project_team_Tro_Sam_Ser_Pas.git
 ```
 - Гит попросит логин и токен.
 
 Проект находится в следующей директории:
 ```
-/home/ubuntu/project_nis
+/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas
 ```
 
 Структура monorepo:
 ```
-project_nis/
+nis_project_team_Tro_Sam_Ser_Pas/
 ├── frontend/
 ├── backend/
 ├── scripts/deploy_host.sh
@@ -254,7 +254,7 @@ project_nis/
 
 ### 7.2 Устанавливаем зависимости и собираем frontend
 ```bash
-cd project_nis/frontend
+cd nis_project_team_Tro_Sam_Ser_Pas/frontend
 npm install
 npm run build
 ```
@@ -264,7 +264,7 @@ npm run build
 ### 7.3 После установки Nginx настроен на /var/www/html (дефолтная конфигурация nginx).
 Поэтому при выкатке обновлений на сайт нужно будет делать следующее:
 ```bash
-cd ~/project_nis
+cd ~/nis_project_team_Tro_Sam_Ser_Pas
 git pull --ff-only
 bash scripts/deploy_host.sh
 ```
@@ -591,9 +591,9 @@ After=network.target postgresql.service
 [Service]
 User=ubuntu
 Group=ubuntu
-WorkingDirectory=/home/ubuntu/project_nis/backend
-EnvironmentFile=/home/ubuntu/project_nis/.env
-ExecStart=/home/ubuntu/project_nis/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+WorkingDirectory=/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas/backend
+EnvironmentFile=/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas/.env
+ExecStart=/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 Restart=always
 RestartSec=5
 
@@ -650,7 +650,7 @@ curl https://nextpath.su/api/health
 Проект деплоится как monorepo:
 
 ```text
-project_nis/
+nis_project_team_Tro_Sam_Ser_Pas/
 ├── frontend/
 ├── backend/
 ├── scripts/deploy_host.sh
@@ -659,7 +659,7 @@ project_nis/
 
 Схема деплоя:
 
-1. Клонировать repo в `/home/ubuntu/project_nis`.
+1. Клонировать repo в `/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas`.
 2. Создать `.env` из `.env.example` с реальным `DATABASE_URL`.
 3. Создать systemd-service `nextpath-backend`.
 4. Добавить в Nginx reverse proxy `/api/` на `127.0.0.1:8000` и SPA fallback.
@@ -670,8 +670,8 @@ project_nis/
 
 ```bash
 cd /home/ubuntu
-git clone https://github.com/d-pascenco/project_nis.git
-cd project_nis
+git clone https://github.com/d-pascenco/nis_project_team_Tro_Sam_Ser_Pas.git
+cd nis_project_team_Tro_Sam_Ser_Pas
 cp .env.example .env
 nano .env   # прописать DATABASE_URL и остальные переменные
 bash scripts/deploy_host.sh
@@ -692,7 +692,7 @@ node -v && npm -v && python3 --version
 Есть два варианта:
 
 - проще: пушить в GitHub, а на хосте делать `git pull --ff-only && bash scripts/deploy_host.sh`;
-- удобнее: создать bare repo `/home/ubuntu/git/project_nis.git` на хосте и добавить локальный remote `prod`, чтобы `git push prod main` запускал deploy hook.
+- удобнее: создать bare repo `/home/ubuntu/git/nis_project_team_Tro_Sam_Ser_Pas.git` на хосте и добавить локальный remote `prod`, чтобы `git push prod main` запускал deploy hook.
 
 Подробные команды для обоих вариантов описаны в секции 12 этого документа.
 
@@ -1004,7 +1004,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 ```bash
 psql -h 127.0.0.1 -U nextpath_app -d nextpath \
-  -f ~/project_nis/backend/sql/002_create_users.sql
+  -f ~/nis_project_team_Tro_Sam_Ser_Pas/backend/sql/002_create_users.sql
 ```
 
 ### 15.6 Endpoints

@@ -2,6 +2,20 @@
 
 NextPath - учебная информационная система для формирования индивидуального плана профессионального развития. Пользователь заполняет анкету, получает план обучения и может отслеживать выполнение этапов в личном кабинете.
 
+## Об учебном проекте
+
+Проект выполнен командой из четырёх студентов первого курса магистратуры Национального исследовательского университета "Высшая школа экономики" в рамках образовательной программы "Магистр по наукам о данных", которая в настоящее время носит название "ПРИНТ".
+
+- [НИУ ВШЭ](https://www.hse.ru/)
+- [Образовательная программа](https://www.hse.ru/ma/mds/)
+
+## About the academic project
+
+This project was completed by a team of four first-year master's students at HSE University as part of the Master of Data Science programme, currently known as "ANNT" (Applied Neural Network Technologies).
+
+- [HSE University](https://www.hse.ru/en/)
+- [Master's programme](https://www.hse.ru/en/ma/mds/)
+
 Развёрнутая версия проекта:
 
 - https://nextpath.su - основное приложение и форма;

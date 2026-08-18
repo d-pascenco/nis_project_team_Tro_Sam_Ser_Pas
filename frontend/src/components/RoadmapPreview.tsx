@@ -56,17 +56,7 @@ interface RoadmapPreviewProps {
   formSnapshot?: FormSnapshot;
 }
 
-// Static fallback stages
-
-const FALLBACK_STAGES: RoadmapStage[] = [
-  { id: 1, title: "Основы программирования", duration: "4 недели", skills: ["HTML/CSS", "JavaScript", "Git"], resources: ["freeCodeCamp", "Codecademy", "YouTube"] },
-  { id: 2, title: "Углублённый JavaScript", duration: "6 недель", skills: ["ES6+", "Async/Await", "DOM"], resources: ["JavaScript.info", "Udemy", "MDN"] },
-  { id: 3, title: "React-разработка", duration: "8 недель", skills: ["React Hooks", "State", "API"], resources: ["React Docs", "Scrimba", "Stepik"] },
-  { id: 4, title: "Проектная практика", duration: "4 недели", skills: ["Portfolio", "Code Review"], resources: ["GitHub", "Frontend Mentor"] },
-  { id: 5, title: "Подготовка к трудоустройству", duration: "4 недели", skills: ["Resume", "Interview"], resources: ["LinkedIn", "Хекслет"] },
-];
-
-// Print Layout (portal — renders outside #root)
+// Print layout uses a portal because print styles hide the application root.
 
 const PrintLayout = React.forwardRef<HTMLDivElement, {
   userData: RoadmapPreviewProps["userData"];
@@ -257,7 +247,7 @@ export const RoadmapPreview = ({
   const [shareMsg, setShareMsg] = useState<string | null>(null);
   const [visualOpen, setVisualOpen] = useState(false);
 
-  const stages = roadmapData?.stages ?? FALLBACK_STAGES;
+  const stages = roadmapData?.stages ?? [];
   const profession = PROFESSION_LABELS[userData.targetProfession] || userData.targetProfession || "цели";
   const timeline = TIMELINE_LABELS[userData.timeline] || roadmapData?.total_duration || "6 месяцев";
 

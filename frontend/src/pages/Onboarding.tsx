@@ -130,14 +130,13 @@ const Onboarding = () => {
       scheduleItems: formData.scheduleItems.filter((s) => s.activity.trim()),
     };
 
-    // Сохраняем форму в БД (fire-and-forget)
+    // Сохранение анкеты не блокирует генерацию плана.
     fetch("/api/forms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(cleanedFormData),
     }).catch(() => {});
 
-    // Генерируем роудмап через Groq
     try {
       const res = await fetch("/api/roadmap", {
         method: "POST",
@@ -147,17 +146,17 @@ const Onboarding = () => {
       if (res.ok) {
         const data = await res.json();
         setRoadmapData(data);
-      } else if (res.status === 429) {
-        // Лимит Groq — показываем понятное сообщение вместо fallback
+      } else {
         const body = await res.json().catch(() => ({}));
-        const detail = body.detail || "Превышен лимит AI-запросов. Попробуйте через час.";
+        const detail = body.detail || "Не удалось создать план. Попробуйте ещё раз.";
         setValidationError(detail);
         setShowGenerating(false);
-        setRoadmapLoading(false);
         return;
       }
     } catch {
-      // При ошибке сети — покажем статичный fallback-роудмап
+      setValidationError("Не удалось связаться с сервисом генерации. Проверьте соединение и попробуйте ещё раз.");
+      setShowGenerating(false);
+      return;
     } finally {
       setRoadmapLoading(false);
     }
@@ -179,7 +178,7 @@ const Onboarding = () => {
 
   const handleBack = () => {
     setValidationError(null);
-    if (showGenerating) return;  // не позволяем назад во время генерации
+    if (showGenerating) return;
     if (showRoadmap) {
       setShowRoadmap(false);
     } else if (currentStep > 0) {

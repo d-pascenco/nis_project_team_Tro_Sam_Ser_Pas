@@ -57,7 +57,7 @@ pip install -r requirements.txt
 
 if command -v psql >/dev/null 2>&1 && [ -n "${DATABASE_URL:-}" ]; then
   for sql_file in "$BACKEND_DIR"/sql/[0-9]*.sql; do
-    [ -f "$sql_file" ] && psql "$DATABASE_URL" -f "$sql_file" || true
+    [ -f "$sql_file" ] && psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f "$sql_file"
   done
 else
   echo "WARN: DATABASE_URL or psql not found; skipping SQL migrations."
@@ -66,7 +66,7 @@ fi
 if systemctl list-unit-files | grep -q "^$SERVICE_NAME.service"; then
   sudo systemctl restart "$SERVICE_NAME"
 else
-  echo "WARN: systemd service '$SERVICE_NAME' is not installed yet; create it from docs/DEPLOY_PRODUCTION.md."
+  echo "WARN: systemd service '$SERVICE_NAME' is not installed yet; follow the initial setup in wiki.md."
 fi
 
 sudo nginx -t

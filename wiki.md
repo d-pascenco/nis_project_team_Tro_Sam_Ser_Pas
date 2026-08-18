@@ -1,9 +1,17 @@
-# Полный воркфлоу создания и развертывания проекта с нуля
+# Настройка, развитие и развёртывание NextPath
 
-## Overview
+## Как пользоваться документом
 
-В рамках проекта разработаны frontend на React и backend на FastAPI, настроены PostgreSQL, Cloudflare и сервер на Oracle Cloud Free Tier.
-Ниже описана подробная последовательность действий команды, возникшие ошибки и способы их устранения.
+В документе сохранён полный ход работы команды: первоначальная настройка инфраструктуры, подключение backend и базы данных, развитие функций и диагностика production. Для нового развёртывания сначала нужны разделы 1-11. Разделы 12-22 описывают интеграцию и последовательное развитие продукта, поэтому они также служат журналом принятых решений.
+
+Основные части:
+
+- разделы 1-9 - инфраструктура Oracle Cloud, сеть, Nginx и PostgreSQL;
+- разделы 10-11 - backend и актуальная последовательность деплоя monorepo;
+- разделы 12-13 - интеграция frontend и валидация формы;
+- разделы 14-22 - генерация плана, авторизация, личный кабинет и развитие интерфейса.
+
+Команды с абсолютным путём `/home/ubuntu/nis_project_team_Tro_Sam_Ser_Pas` относятся к production-хосту команды. Для другого сервера этот путь можно заменить; `scripts/deploy_host.sh` по умолчанию определяет корень клонированного репозитория автоматически.
 
 ## 1. Создание инстанса в Oracle Cloud
 
@@ -50,7 +58,7 @@ sudo iptables -L -n
 ncat -zv наш_ip 80
 ```
 
-### 2.5 Сохранение iptables-правил после перезагрузки
+### 2.2 Сохранение iptables-правил после перезагрузки
 
 На Oracle Cloud iptables-правила сбрасываются при перезагрузке. Чтобы они применялись автоматически:
 
@@ -67,7 +75,7 @@ sudo netfilter-persistent save
 sudo iptables -L INPUT -n --line-numbers | grep -E '80|443'
 ```
 
-Если правил нет — добавляем и сохраняем снова:
+Если правил нет - добавляем и сохраняем снова:
 
 ```bash
 sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
@@ -76,13 +84,13 @@ sudo netfilter-persistent save
 ```
 - ответ будет что-то вроде Ncat: Connected to ваш_ip:80.
 
-### 2.2 Проверка подсети
+### 2.3 Проверка подсети
 Подсеть из коробки имела параметры:
 - тип: `Public Subnet`
 - CIDR: `10.0.0.0/24`
 Это означало, что инстанс может использовать публичный доступ, но только при наличии правильного маршрута через Internet Gateway.
 
-### 2.3 Internet Gateway
+### 2.4 Internet Gateway
 Для VCN был создан Internet Gateway.
 Путь в интерфейсе:
 - `Networking`
@@ -91,7 +99,7 @@ sudo netfilter-persistent save
 - `Internet Gateway`
 - `Create Internet Gateway`
 
-### 2.4 Route Table
+### 2.5 Route Table
 В `Default Route Table` было добавлено правило:
 - **Destination CIDR block:** `0.0.0.0/0`
 - **Target Type:** `Internet Gateway`
@@ -112,7 +120,7 @@ ssh -i /путь/к/ssh-ключу/ssh-key-2026-04-12.key ubuntu@публичн�
 ```
 б. Windows
 - Установка ssh клиента:
-"Пуск" → "Параметры" → "Приложения" → "Дополнительные компоненты" → "Добавить компонент" → найти OpenSSH Client → установить.
+"Пуск" -> "Параметры" -> "Приложения" -> "Дополнительные компоненты" -> "Добавить компонент" -> найти OpenSSH Client -> установить.
 `Settings` - `Apps` - `Optional Features` - `Add a feature` - выбрать `OpenSSH Client` - установить
 - Затем открываем powershell и подключаемся:
 ```bash
@@ -192,18 +200,18 @@ sudo apt upgrade -y
 sudo apt install -y nginx
 sudo apt install -y curl git
 ```
-- `nginx` — веб-сервер
-- `curl` — выполнение HTTP-запросов из консоли
-- `git` — клонирование и обновление репозитория проекта
+- `nginx` - веб-сервер
+- `curl` - выполнение HTTP-запросов из консоли
+- `git` - клонирование и обновление репозитория проекта
 Также установлены:
-- `nano` — текстовый редактор
+- `nano` - текстовый редактор
 
 Команды, которые помогут в навигации:
-- `dpkg -l` — все существующие установленные пакеты и их назначение
-- `apt-mark showmanual` — пользовательские, без авто
+- `dpkg -l` - все существующие установленные пакеты и их назначение
+- `apt-mark showmanual` - пользовательские, без авто
 
 ## 6. Настройка и запуск Nginx
-Nginx — это веб-сервер, который быстро отдает статические файлы сайта (HTML, картинки) и работает как прокси: принимает запросы от пользователей и пересылает на другие серверы (балансировка нагрузки).
+Nginx - это веб-сервер, который быстро отдает статические файлы сайта (HTML, картинки) и работает как прокси: принимает запросы от пользователей и пересылает на другие серверы (балансировка нагрузки).
 Альтернатива Apache: быстрее на статике, асинхронный. Конфиг в /etc/nginx/nginx.conf.
 
 ### 6.1 Установка, включение и запуск
@@ -249,7 +257,7 @@ nis_project_team_Tro_Sam_Ser_Pas/
 ├── frontend/
 ├── backend/
 ├── scripts/deploy_host.sh
-└── wiki.md        — документация
+└── wiki.md        - документация
 ```
 
 ### 7.2 Устанавливаем зависимости и собираем frontend
@@ -278,7 +286,7 @@ bash scripts/deploy_host.sh
 - проверяет и reload'ит Nginx
 
 ### 7.4 Выдаем сайту сертификат через sertbot (переход с http на https)
-HTTPS — обязательно для любого сайта с формами/данными. Бесплатно через Let’s Encrypt.
+HTTPS - обязательно для любого сайта с формами/данными. Бесплатно через Let’s Encrypt.
 Certbot сам найдёт nginx и добавит SSL в конфиг /etc/nginx/sites-available/наш_сайт.ком
 
 Установка:
@@ -291,7 +299,7 @@ sudo certbot --nginx -d nextpath.su -d www.nextpath.su
 ```
 
 Что будет без сертификатов:
-- браузеры пишут “Not secure”.
+- браузеры пишут "Not secure".
 - пользователи закрывают сайт.
 - Google/Yandex опускают в поиске.
 - хакеры могут украсть данные.
@@ -418,7 +426,7 @@ sudo ss -tulnp | grep 5432
 ```
 Ожидаемый результат `0.0.0.0:5432`.
 
-## 00. Тесты backend
+### 9.6 Тесты backend
 
 Директория `backend/tests/` содержит интеграционные тесты API на базе `FastAPI TestClient`.
 
@@ -429,12 +437,12 @@ source venv/bin/activate
 pytest tests/ -v
 ```
 
-Зависимость от реальной БД отсутствует — используется `FakeDb`, подменяющий SQLAlchemy-сессию.
+Зависимость от реальной БД отсутствует - используется `FakeDb`, подменяющий SQLAlchemy-сессию.
 
 Тест-кейсы:
-- `test_health` — проверяет `/api/health`, ожидает `{"status": "ok"}`
-- `test_submit_onboarding_form_with_frontend_camel_case_payload` — проверяет, что `POST /api/forms` принимает camelCase-поля от фронтенда и возвращает 201
-- `test_submit_onboarding_form_validates_ranges` — проверяет отклонение некорректных значений (422)
+- `test_health` - проверяет `/api/health`, ожидает `{"status": "ok"}`
+- `test_submit_onboarding_form_with_frontend_camel_case_payload` - проверяет, что `POST /api/forms` принимает camelCase-поля от фронтенда и возвращает 201
+- `test_submit_onboarding_form_validates_ranges` - проверяет отклонение некорректных значений (422)
 
 ## 10. Backend для формы сайта
 
@@ -459,13 +467,13 @@ Backend принимает именно эти camelCase-ключи, поэто�
 
 В репозитории появился каталог `backend/`:
 
-- `backend/app/main.py` — FastAPI-приложение с endpoint'ами `/api/health` и `/api/forms`.
-- `backend/app/database.py` — подключение SQLAlchemy к PostgreSQL через `DATABASE_URL`.
-- `backend/app/models.py` — SQLAlchemy-модель таблицы `user_forms`.
-- `backend/app/schemas.py` — Pydantic-схемы, которые валидируют реальные поля формы сайта.
-- `backend/sql/001_create_user_forms.sql` — SQL-скрипт для ручного создания таблицы и выдачи прав `nextpath_app`.
-- `backend/.env.example` — пример переменных окружения для хоста.
-- `backend/tests/test_api.py` — базовые тесты API без подключения к реальной базе.
+- `backend/app/main.py` - FastAPI-приложение с endpoint'ами `/api/health` и `/api/forms`.
+- `backend/app/database.py` - подключение SQLAlchemy к PostgreSQL через `DATABASE_URL`.
+- `backend/app/models.py` - SQLAlchemy-модель таблицы `user_forms`.
+- `backend/app/schemas.py` - Pydantic-схемы, которые валидируют реальные поля формы сайта.
+- `backend/sql/001_create_user_forms.sql` - SQL-скрипт для ручного создания таблицы и выдачи прав `nextpath_app`.
+- `backend/.env.example` - пример переменных окружения для хоста.
+- `backend/tests/test_api.py` - базовые тесты API без подключения к реальной базе.
 
 ### 10.3 Таблица для onboarding-формы
 
@@ -556,9 +564,7 @@ LIMIT 5;
 
 ```bash
 DATABASE_URL=postgresql://nextpath_app:REAL_PASSWORD@127.0.0.1:5432/nextpath
-APP_HOST=127.0.0.1
-APP_PORT=8000
-FRONTEND_ORIGINS=https://nextpath.su,https://www.nextpath.su
+FRONTEND_ORIGINS=https://nextpath.su,https://www.nextpath.su,https://my.nextpath.su
 CREATE_TABLES_ON_STARTUP=true
 ```
 
@@ -579,7 +585,7 @@ Backend принимает camelCase-ключи напрямую из `FormData`
 
 ### 10.8 Production-запуск backend через systemd
 
-На хосте backend держится отдельным systemd-сервисом — автоматически перезапускается после падения или перезагрузки сервера.
+На хосте backend держится отдельным systemd-сервисом - автоматически перезапускается после падения или перезагрузки сервера.
 
 Файл `/etc/systemd/system/nextpath-backend.service`:
 
@@ -640,7 +646,7 @@ curl https://nextpath.su/api/health
 Лучше схема такая:
 
 ```text
-Пользователь → HTTPS → nginx → FastAPI backend → PostgreSQL localhost
+Пользователь -> HTTPS -> nginx -> FastAPI backend -> PostgreSQL localhost
 ```
 
 То есть PostgreSQL должен быть доступен backend-у через `127.0.0.1:5432`, а внешний порт `5432` лучше закрыть, если он больше не нужен команде для прямого подключения из SQL-клиентов.
@@ -666,7 +672,7 @@ nis_project_team_Tro_Sam_Ser_Pas/
 5. Запустить `bash scripts/deploy_host.sh`.
 6. Проверить `https://nextpath.su/onboarding` и `https://nextpath.su/api/health`.
 
-### 12.1 Первый деплой на хост
+### 11.1 Первый деплой на хост
 
 ```bash
 cd /home/ubuntu
@@ -694,7 +700,7 @@ node -v && npm -v && python3 --version
 - проще: пушить в GitHub, а на хосте делать `git pull --ff-only && bash scripts/deploy_host.sh`;
 - удобнее: создать bare repo `/home/ubuntu/git/nis_project_team_Tro_Sam_Ser_Pas.git` на хосте и добавить локальный remote `prod`, чтобы `git push prod main` запускал deploy hook.
 
-Подробные команды для обоих вариантов описаны в секции 12 этого документа.
+В репозитории используется первый вариант: обновление через GitHub и последующий запуск `scripts/deploy_host.sh`. Вариант с bare-репозиторием зафиксирован как возможная схема автоматизации и требует отдельного deploy hook на сервере.
 
 ### 11.4 `.env` и Nginx-конфиг
 
@@ -708,9 +714,7 @@ cp .env.example .env
 
 ```env
 DATABASE_URL=postgresql://nextpath_app:PASSWORD@127.0.0.1:5432/nextpath
-APP_HOST=127.0.0.1
-APP_PORT=8000
-FRONTEND_ORIGINS=https://nextpath.su,https://www.nextpath.su
+FRONTEND_ORIGINS=https://nextpath.su,https://www.nextpath.su,https://my.nextpath.su
 CREATE_TABLES_ON_STARTUP=true
 ```
 
@@ -734,7 +738,7 @@ location /api/ {
 
 После реализации backend кнопка "Создать карту" на последнем шаге формы не отправляла никаких данных. В `src/pages/Onboarding.tsx` функция `handleNext()` просто вызывала `setShowRoadmap(true)` без fetch-запроса.
 
-Проверка подтвердила — в задеплоенном JS-бандле строка `api/forms` не встречается:
+Проверка подтвердила - в задеплоенном JS-бандле строка `api/forms` не встречается:
 
 ```bash
 grep -c 'api/forms' /var/www/html/assets/*.js
@@ -767,7 +771,7 @@ const submitForm = async () => {
 
 После добавления fetch форма стала отправляться, но backend возвращал `422 Unprocessable Entity`. Причина: поля `age` и `yearsExperience` в `FormData` имеют тип `string` и при пустом значении отправляются как `""`. Backend ожидает `int | None`, и Pydantic v2 не может сконвертировать пустую строку в число.
 
-Исправление в `backend/app/schemas.py` — добавлен валидатор:
+Исправление в `backend/app/schemas.py` - добавлен валидатор:
 
 ```python
 @field_validator("age", "years_experience", "hours_per_week", mode="before")
@@ -806,15 +810,15 @@ psql -h 127.0.0.1 -U nextpath_app -d nextpath -c \
 
 ### 13.1 Обязательные поля
 
-Не все поля формы обязательны — только те, без которых нельзя построить роудмап:
+Не все поля формы обязательны - только те, без которых нельзя построить роудмап:
 
 | Шаг | Обязательные поля |
 |-----|-------------------|
 | О вас | Полное имя, Текущий статус |
 | Образование | Уровень образования |
 | Цели | Желаемая профессия, Срок достижения |
-| Навыки | — |
-| Ограничения | — |
+| Навыки | - |
+| Ограничения | - |
 
 ### 13.2 Обязательные поля (расширенный список)
 
@@ -822,11 +826,11 @@ psql -h 127.0.0.1 -U nextpath_app -d nextpath -c \
 
 | Шаг | Обязательные поля | Дополнительные условия |
 |-----|-------------------|------------------------|
-| О вас | Полное имя, Возраст, Город, Текущий статус | — |
+| О вас | Полное имя, Возраст, Город, Текущий статус | - |
 | Образование | Уровень образования, Учебное заведение, Специальность, Опыт работы | CV: минимум 300 символов |
 | Цели | Желаемая профессия, Индустрия, Срок, Приоритеты (≥1) | Мотивация: минимум 50 символов |
-| Навыки | — | — |
-| Ограничения | — | — |
+| Навыки | - | - |
+| Ограничения | - | - |
 
 ### 13.3 Реализация
 
@@ -842,12 +846,7 @@ psql -h 127.0.0.1 -U nextpath_app -d nextpath -c \
 
 ### 14.1 Выбор провайдера
 
-Для генерации персонального плана развития подключён [Groq](https://console.groq.com) — бесплатный API с очень высокой скоростью инференса. Используется модель `llama-3.3-70b-versatile`.
-
-Преимущества перед OpenAI:
-- бесплатный tier без привязки карты
-- скорость генерации ~3–5 секунд на роудмап
-- достаточное качество для структурированного JSON-вывода
+Для генерации персонального плана развития подключён [Groq](https://console.groq.com). В проекте используется модель `llama-3.3-70b-versatile`, которая поддерживает требуемый структурированный JSON-ответ. Доступность модели, тариф и лимиты зависят от условий провайдера и проверяются в Groq Console перед развёртыванием.
 
 ### 14.2 Установка зависимости
 
@@ -866,7 +865,7 @@ groq==0.13.0
 GROQ_API_KEY=gsk_...  # ключ с console.groq.com
 ```
 
-Добавляется в корневой `.env` на хосте. Если переменная не задана, endpoint возвращает `503` и фронтенд показывает статичный fallback-роудмап.
+Добавляется в корневой `.env` на хосте. Если переменная не задана, endpoint возвращает `503`, а frontend показывает пользователю сообщение об ошибке и сохраняет введённые данные формы для повторной попытки.
 
 ### 14.4 Endpoint POST /api/roadmap
 
@@ -896,15 +895,15 @@ Backend принимает те же camelCase-поля, что и `/api/forms`.
 
 При нажатии "Создать карту":
 
-1. Данные формы сохраняются в БД (`POST /api/forms`) — fire-and-forget, не блокирует UI.
+1. Данные формы сохраняются в БД (`POST /api/forms`) - fire-and-forget, не блокирует UI.
 2. Показывается страница роудмапа с индикатором загрузки ("Генерируем персональный план...").
 3. Параллельно выполняется запрос к `POST /api/roadmap`.
-4. При успехе — отображается персональный план.
-5. При ошибке (503/502/network) — тихо показывается статичный fallback.
+4. При успехе отображается персональный план.
+5. При ошибке API или сети пользователь получает сообщение и может повторить запрос. Заранее подготовленный план не подставляется вместо ответа модели.
 
 ### 14.6 Диагностика
 
-В консоли браузера (F12 → Console) виден лог:
+В консоли браузера (F12 -> Console) виден лог:
 
 ```
 [roadmap] generated: {stages: [...], total_duration: "...", summary: "..."}
@@ -927,10 +926,10 @@ journalctl -u nextpath-backend -f | grep roadmap
 
 ### 15.1 Архитектура
 
-Авторизация построена на Google Identity Services (GIS) — пользователь нажимает кнопку "Войти через Google", Google возвращает ID-токен, бэкенд верифицирует токен и выдаёт собственный JWT.
+Авторизация построена на Google Identity Services (GIS) - пользователь нажимает кнопку "Войти через Google", Google возвращает ID-токен, бэкенд верифицирует токен и выдаёт собственный JWT.
 
 ```text
-Браузер → Google (OAuth) → ID-токен → POST /api/auth/google → JWT → localStorage
+Браузер -> Google (OAuth) -> ID-токен -> POST /api/auth/google -> JWT -> localStorage
 ```
 
 JWT хранится в `localStorage` под ключом `nextpath_token`. Все защищённые запросы передают его в заголовке `Authorization: Bearer <token>`.
@@ -939,16 +938,16 @@ JWT хранится в `localStorage` под ключом `nextpath_token`. В�
 
 1. Перейти на [console.cloud.google.com](https://console.cloud.google.com)
 2. Создать проект или выбрать существующий
-3. **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+3. **APIs & Services** -> **Credentials** -> **Create Credentials** -> **OAuth 2.0 Client ID**
 4. Application type: **Web application**
 5. Name: `NextPath` (только для консоли)
 6. **Authorized JavaScript origins:**
    ```
    https://nextpath.su
    https://www.nextpath.su
-   http://localhost:5173
+   http://localhost:8080
    ```
-7. **Authorized redirect URIs:** оставить пустым — используется implicit flow через JavaScript origins
+7. **Authorized redirect URIs:** оставить пустым - используется implicit flow через JavaScript origins
 8. Скопировать **Client ID** вида `1234567890-abc.apps.googleusercontent.com`
 
 ### 15.3 Переменные окружения
@@ -961,7 +960,7 @@ JWT_SECRET=любая-длинная-случайная-строка
 VITE_GOOGLE_CLIENT_ID=1234...apps.googleusercontent.com
 ```
 
-`VITE_` префикс обязателен для Vite — только так переменная попадает в браузерный бандл.
+`VITE_` префикс обязателен для Vite - только так переменная попадает в браузерный бандл.
 
 ### 15.4 Backend-зависимости
 
@@ -1036,10 +1035,10 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 ### 15.8 Поток авторизации с сохранением роудмапа
 
 1. Пользователь просматривает сгенерированный роудмап.
-2. Нажимает "Войти и сохранить план" — открывается диалог с кнопкой Google.
+2. Нажимает "Войти и сохранить план" - открывается диалог с кнопкой Google.
 3. После успешного входа:
    - JWT и данные пользователя сохраняются в `localStorage`.
-   - Если есть текущий роудмап — он сохраняется через `POST /api/me/roadmap`.
+   - Если есть текущий роудмап - он сохраняется через `POST /api/me/roadmap`.
    - Пользователь перенаправляется на `/profile`.
 4. На странице `/profile` отображается аватар, имя и сохранённый план.
 
@@ -1062,12 +1061,12 @@ export const authHeaders = () => ({ Authorization: `Bearer ${getToken()}`, ... }
 Особенности:
 - Тёмный дизайн в стиле сайта (`#0a0503` фон, цветные рамки этапов)
 - Все 6 вкладок раскрыты: Обзор, Расписание, Недели, Практика, Ресурсы, Образ жизни
-- Интерактивность: JS внутри файла — переключение вкладок, открытие/закрытие этапов
+- Интерактивность: JS внутри файла - переключение вкладок, открытие/закрытие этапов
 - Ссылки на ресурсы открываются в новой вкладке
-- Работает офлайн — никаких внешних зависимостей
+- Работает офлайн - никаких внешних зависимостей
 - Имя файла: `nextpath-{profession}.html`
 
-Реализация — статичный импорт модуля в `RoadmapPreview.tsx`:
+Реализация - статичный импорт модуля в `RoadmapPreview.tsx`:
 ```ts
 import { generateRoadmapHTML } from "@/lib/generate-html";
 
@@ -1087,7 +1086,7 @@ const handleDownload = () => {
 3. Возвращает `{id: "uuid-here"}`
 4. Фронтенд копирует `nextpath.su/shared/{id}` в буфер
 
-Страница `/shared/:id` — публичная, без авторизации, показывает полный роудмап.
+Страница `/shared/:id` - публичная, без авторизации, показывает полный роудмап.
 
 ```sql
 CREATE TABLE IF NOT EXISTS shared_roadmaps (
@@ -1100,32 +1099,32 @@ CREATE TABLE IF NOT EXISTS shared_roadmaps (
 
 ### 16.3 Кликабельные ресурсы и навигация
 
-- Ресурсы в каждом этапе — кликабельные ссылки с маппингом платформ (`lib/constants.ts`)
+- Ресурсы в каждом этапе - кликабельные ссылки с маппингом платформ (`lib/constants.ts`)
 - Логотип ведёт на главную через `<Link to="/">` из react-router-dom
 - Кнопка "Начать обучение" открывает модальное окно с ресурсами этапа
 
 ## 17. Визуальный граф роудмапа
 
-Компонент `RoadmapVisual.tsx` — полноэкранный модальный граф в тёмном стиле.
+Компонент `RoadmapVisual.tsx` - полноэкранный модальный граф в тёмном стиле.
 
-**Структура (снизу вверх — от старта к цели):**
+**Структура (снизу вверх - от старта к цели):**
 ```
-[GOAL — целевая профессия, требования, портфолио]
+[GOAL - целевая профессия, требования, портфолио]
          |
-[Этап 1 — текущий, выделен цветом, метка "СЕЙЧАС"]
+[Этап 1 - текущий, выделен цветом, метка "СЕЙЧАС"]
          |
 [Этап 2 ... Этап N]
          |
-[START — пользователь, текущая занятость]
+[START - пользователь, текущая занятость]
 ```
 
 **6 вкладок в каждом этапе:**
-- Обзор — навыки, инструменты, ценность для найма, критерий завершения
-- Расписание — утренний блок, учебные сессии, вечерний ритуал, ритм недели
-- Недели — план по неделям с задачами
-- Практика — проекты и результаты этапа
-- Ресурсы — ссылки с типом ресурса (курс, видео, практика)
-- Жизнь — режим дня, тренировки, питание, признаки выгорания
+- Обзор - навыки, инструменты, ценность для найма, критерий завершения
+- Расписание - утренний блок, учебные сессии, вечерний ритуал, ритм недели
+- Недели - план по неделям с задачами
+- Практика - проекты и результаты этапа
+- Ресурсы - ссылки с типом ресурса (курс, видео, практика)
+- Жизнь - режим дня, тренировки, питание, признаки выгорания
 
 GOAL-узел при клике раскрывает список требований работодателей и рекомендуемые проекты для портфолио.
 
@@ -1133,28 +1132,28 @@ GOAL-узел при клике раскрывает список требова
 
 ## 18. Полный личный кабинет (my.nextpath.su)
 
-Личный кабинет (`frontend/src/pages/Profile.tsx`) — отдельный домен `my.nextpath.su`.
+Личный кабинет (`frontend/src/pages/Profile.tsx`) - отдельный домен `my.nextpath.su`.
 
 ### Разделение доменов
 
 ```text
-nextpath.su        → публичный сайт + форма онбординга
-my.nextpath.su     → личный кабинет (только для авторизованных)
+nextpath.su        -> публичный сайт + форма онбординга
+my.nextpath.su     -> личный кабинет (только для авторизованных)
 ```
 
 Оба домена отдают одни и те же статичные файлы из `/var/www/html`. Роутинг определяется по `window.location.hostname` в `App.tsx`:
-- `hostname.startsWith("my.")` → `CabinetRoutes`
-- иначе → `MainRoutes`
+- `hostname.startsWith("my.")` -> `CabinetRoutes`
+- иначе -> `MainRoutes`
 
-**Проблема cross-subdomain localStorage**: токен сохранённый на `nextpath.su` не доступен на `my.nextpath.su`. Решение — передача токена через URL при редиректе:
+**Проблема cross-subdomain localStorage**: токен сохранённый на `nextpath.su` не доступен на `my.nextpath.su`. Решение - передача токена через URL при редиректе:
 ```
-nextpath.su → авторизация → goToCabinet("/profile", token)
-→ my.nextpath.su/profile?t=TOKEN
-→ App.tsx извлекает ?t= и сохраняет в localStorage
-→ CabinetGuard видит авторизацию
+nextpath.su -> авторизация -> goToCabinet("/profile", token)
+-> my.nextpath.su/profile?t=TOKEN
+-> App.tsx извлекает ?t= и сохраняет в localStorage
+-> CabinetGuard видит авторизацию
 ```
 
-**Прямой вход** на `my.nextpath.su` (без редиректа) — показывается страница входа `CabinetLoginPage` прямо на поддомене с кнопкой Google Sign-In.
+**Прямой вход** на `my.nextpath.su` (без редиректа) - показывается страница входа `CabinetLoginPage` прямо на поддомене с кнопкой Google Sign-In.
 
 ### Разделы кабинета
 
@@ -1162,18 +1161,18 @@ nextpath.su → авторизация → goToCabinet("/profile", token)
 |--------|------------|
 | **Обзор** | Приветствие, 4 стата (этапов/выполнено/прогресс/осталось), прогресс-бар, текущий этап, кнопки "Карта развития" и "Скачать план" |
 | **Мой план** | Роудмап с чекбоксами на каждом этапе (прогресс автосохраняется), кнопка "Карта развития" |
-| **Профиль** | Аватар Google, редактирование имени (карандаш → inline edit), email, учётные данные |
+| **Профиль** | Аватар Google, редактирование имени (карандаш -> inline edit), email, учётные данные |
 | **Настройки** | Редактирование имени, кнопки "Редактировать профиль" и "Обновить план", выход |
 
 ### Редактирование профиля и пересчёт плана
 
 Кнопка "Редактировать профиль" открывает `Sheet` с полной формой из 6 вкладок (все шаги онбординга), предзаполненной сохранёнными данными.
 
-**"Сохранить"** → `POST /api/me/save-form` — только данные формы.
+**"Сохранить"** -> `POST /api/me/save-form` - только данные формы.
 
-**"Обновить план"** → `POST /api/me/recalculate` — данные + новый AI-роудмап → переключает на вкладку "Мой план".
+**"Обновить план"** -> `POST /api/me/recalculate` - данные + новый AI-роудмап -> переключает на вкладку "Мой план".
 
-**Кнопка "Обновить план" в Настройках** → прямой вызов `POST /api/me/recalculate` с текущими сохранёнными данными (без открытия редактора).
+**Кнопка "Обновить план" в Настройках** -> прямой вызов `POST /api/me/recalculate` с текущими сохранёнными данными (без открытия редактора).
 
 ### База данных для кабинета
 
@@ -1233,12 +1232,12 @@ CREATE TABLE shared_roadmaps (
 
 Промпт передаёт в модель:
 - Текущие hard/soft skills и желаемые для освоения
-- Расписание занятости из формы (Работа 09:00–18:00, Сон 23:00–07:00...)
+- Расписание занятости из формы (Работа 09:00-18:00, Сон 23:00-07:00...)
 - Учебные блоки планируются в незанятые временные окна
 
 ### Токенный лимит
 
-Groq бесплатный tier: 100K токенов/день. Один запрос занимает ~8-10K токенов.
+Во время разработки один запрос занимал около 8-10K токенов. Актуальные суточные ограничения зависят от модели и тарифа Groq, поэтому фиксированное значение в конфигурации проекта не предполагается.
 
 - `max_tokens=4000`
 - При ошибке 429 (превышение лимита) автоматически пробуется модель `llama-3.1-8b-instant`
@@ -1259,17 +1258,17 @@ Groq бесплатный tier: 100K токенов/день. Один запр�
 
 ### Ключевые UX-решения
 
-**Autocomplete** (`Autocomplete.tsx`) — подсказки при вводе с подсветкой совпадения, навигацией стрелками, поддержкой Escape.
+**Autocomplete** (`Autocomplete.tsx`) - подсказки при вводе с подсветкой совпадения, навигацией стрелками, поддержкой Escape.
 
-**Города по стране** — при выборе страны автодополнение для города показывает только города этой страны (35+ стран с отдельными списками).
+**Города по стране** - при выборе страны автодополнение для города показывает только города этой страны (35+ стран с отдельными списками).
 
-**Навыки в 4 блоках** — разделение текущих и желаемых навыков (2 категории × 2 типа = 4 блока).
+**Навыки в 4 блоках** - разделение текущих и желаемых навыков (2 категории x 2 типа = 4 блока).
 
-**Вставка через запятую** — поле навыков принимает "Python, React, SQL" → 3 тега.
+**Вставка через запятую** - поле навыков принимает "Python, React, SQL" -> 3 тега.
 
-**Расписание** — пресеты (Работа, Сон, Тренировки...), время через `type="time"` с корректной шириной для AM/PM.
+**Расписание** - пресеты (Работа, Сон, Тренировки...), время через `type="time"` с корректной шириной для AM/PM.
 
-**Политика обработки данных** — чекбокс согласия на последнем шаге. Кнопка "Создать карту" заблокирована пока не отмечено.
+**Политика обработки данных** - чекбокс согласия на последнем шаге. Кнопка "Создать карту" заблокирована пока не отмечено.
 
 ### SQL-миграции
 
@@ -1289,13 +1288,13 @@ Groq бесплатный tier: 100K токенов/день. Один запр�
 При нажатии "Создать карту" показывается полноэкранный overlay `RoadmapGenerating.tsx`:
 
 - Тёмный радиальный градиент фон
-- Большой прогресс-бар (0→100%)
+- Большой прогресс-бар (0->100%)
 - 8 шагов с индивидуальными мини-барами и иконками
-- При завершении API — анимация ускоряется ×5
+- При завершении API - анимация ускоряется x5
 - Переход управляется `useEffect` в `Onboarding.tsx` (не внутри компонента)
 
 ```tsx
-// Onboarding.tsx — надёжный переход без stale closure
+// Onboarding.tsx - надёжный переход без stale closure
 useEffect(() => {
   if (!showGenerating || roadmapLoading) return;
   const elapsed = Date.now() - generatingStart.current;
@@ -1308,7 +1307,7 @@ useEffect(() => {
 }, [showGenerating, roadmapLoading]);
 ```
 
-Минимальное время показа — 4.5 секунды, независимо от скорости ответа API.
+Минимальное время показа - 4.5 секунды, независимо от скорости ответа API.
 
 ## 22. Архитектура фронтенда (актуальная)
 
@@ -1316,37 +1315,37 @@ useEffect(() => {
 
 ```
 src/
-  types.ts              — все типы (RoadmapData, OnboardingFormData, ScheduleItem...)
+  types.ts              - все типы (RoadmapData, OnboardingFormData, ScheduleItem...)
   lib/
-    auth.ts             — JWT в localStorage (getToken, setToken, authHeaders)
-    urls.ts             — логика доменов (IS_CABINET_DOMAIN, goToCabinet)
-    constants.ts        — PROFESSION_LABELS, STAGE_COLORS, getResourceUrl
-    suggestions.ts      — CITIES_BY_COUNTRY, UNIVERSITIES, PROFESSIONS, LANGUAGES
-    generate-html.ts    — генератор HTML-файла для скачивания
+    auth.ts             - JWT в localStorage (getToken, setToken, authHeaders)
+    urls.ts             - логика доменов (IS_CABINET_DOMAIN, goToCabinet)
+    constants.ts        - PROFESSION_LABELS, STAGE_COLORS, getResourceUrl
+    suggestions.ts      - CITIES_BY_COUNTRY, UNIVERSITIES, PROFESSIONS, LANGUAGES
+    generate-html.ts    - генератор HTML-файла для скачивания
   components/
-    RoadmapPreview.tsx  — карточки роудмапа + download + share + CTA
-    RoadmapVisual.tsx   — fullscreen тёмный граф
-    RoadmapGenerating.tsx — экран загрузки
-    ProfileEditForm.tsx — форма редактирования в кабинете (Sheet)
-    Autocomplete.tsx    — переиспользуемый autocomplete
-    steps/              — 6 шагов онбординга
+    RoadmapPreview.tsx  - карточки роудмапа + download + share + CTA
+    RoadmapVisual.tsx   - fullscreen тёмный граф
+    RoadmapGenerating.tsx - экран загрузки
+    ProfileEditForm.tsx - форма редактирования в кабинете (Sheet)
+    Autocomplete.tsx    - переиспользуемый autocomplete
+    steps/              - 6 шагов онбординга
   pages/
-    Index.tsx           — лендинг nextpath.su
-    Onboarding.tsx      — форма + роудмап (nextpath.su)
-    Profile.tsx         — личный кабинет (my.nextpath.su)
-    Shared.tsx          — публичная страница роудмапа (/shared/:id)
-  App.tsx               — домен-aware роутинг
+    Index.tsx           - лендинг nextpath.su
+    Onboarding.tsx      - форма + роудмап (nextpath.su)
+    Profile.tsx         - личный кабинет (my.nextpath.su)
+    Shared.tsx          - публичная страница роудмапа (/shared/:id)
+  App.tsx               - домен-aware роутинг
 ```
 
 ### Роутинг
 
 ```text
-nextpath.su/           → Index (лендинг)
-nextpath.su/onboarding → Onboarding (форма + роудмап)
-nextpath.su/shared/:id → Shared (публичная ссылка)
-nextpath.su/profile    → редирект на my.nextpath.su/profile
+nextpath.su/           -> Index (лендинг)
+nextpath.su/onboarding -> Onboarding (форма + роудмап)
+nextpath.su/shared/:id -> Shared (публичная ссылка)
+nextpath.su/profile    -> редирект на my.nextpath.su/profile
 
-my.nextpath.su/        → редирект на /profile
-my.nextpath.su/profile → Profile (кабинет, с CabinetLoginPage если не авторизован)
-my.nextpath.su/shared/:id → Shared (тоже работает)
+my.nextpath.su/        -> редирект на /profile
+my.nextpath.su/profile -> Profile (кабинет, с CabinetLoginPage если не авторизован)
+my.nextpath.su/shared/:id -> Shared (тоже работает)
 ```

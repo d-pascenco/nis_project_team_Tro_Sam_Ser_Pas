@@ -7,7 +7,7 @@ import React from "react";
 import type { RoadmapData, RoadmapStage, RoadmapResource } from "@/types";
 import { getResourceUrl } from "@/lib/constants";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 const PROFESSION_LABELS: Record<string, string> = {
   frontend: "Frontend Developer", backend: "Backend Developer", fullstack: "Fullstack Developer",
@@ -28,7 +28,7 @@ const resMeta = (r: string | RoadmapResource) =>
 const resIcon = (r: string | RoadmapResource) =>
   isResourceObj(r) ? (RESOURCE_TYPE_ICON[r.type] || "🔗") : "🔗";
 
-// ── Palette ───────────────────────────────────────────────────────────────────
+// Palette
 
 const PALETTE = [
   { border: "#c0623e", bg: "rgba(192,98,62,0.12)",  text: "#e8855a", num: "rgba(192,98,62,0.3)" },
@@ -38,7 +38,7 @@ const PALETTE = [
   { border: "#3ea262", bg: "rgba(62,162,98,0.12)",  text: "#5abf80", num: "rgba(62,162,98,0.3)" },
 ];
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// Sub-components
 
 const Label = ({ text, color }: { text: string; color: string }) => (
   <div style={{
@@ -69,7 +69,7 @@ const Connector = ({ color }: { color: string }) => (
   </div>
 );
 
-// ── Stage block ───────────────────────────────────────────────────────────────
+// Stage block
 
 const StageBlock = ({ stage, idx, completed }: {
   stage: RoadmapStage; idx: number; completed: boolean;
@@ -235,7 +235,7 @@ const StageBlock = ({ stage, idx, completed }: {
   );
 };
 
-// ── Main layout ───────────────────────────────────────────────────────────────
+// Main layout
 
 interface RoadmapPDFLayoutProps {
   roadmapData: RoadmapData;

@@ -28,7 +28,7 @@ const resMeta = (r: unknown) => isObj(r) ? [(r as RoadmapResource).platform, (r 
 const resIcon = (r: unknown) => isObj(r) ? (RESOURCE_ICON[(r as RoadmapResource).type] || "🔗") : "🔗";
 const resUrl  = (r: unknown) => isObj(r) ? getResourceUrl((r as RoadmapResource).platform || (r as RoadmapResource).name || "") : getResourceUrl(typeof r === "string" ? r : "");
 
-// ── Stage HTML ────────────────────────────────────────────────────────────────
+// Stage HTML
 
 function stageHTML(stage: RoadmapStage, idx: number, completed: boolean): string {
   const p = PALETTE[idx % PALETTE.length];
@@ -220,7 +220,7 @@ function stageHTML(stage: RoadmapStage, idx: number, completed: boolean): string
   </div>`;
 }
 
-// ── Full HTML ─────────────────────────────────────────────────────────────────
+// Full HTML
 
 interface HTMLOptions {
   roadmapData: RoadmapData;
@@ -590,7 +590,7 @@ export function generateRoadmapHTML(opts: HTMLOptions): string {
 </html>`;
 }
 
-// ── Download ──────────────────────────────────────────────────────────────────
+// Download
 
 interface DownloadOptions {
   roadmapData: RoadmapData;

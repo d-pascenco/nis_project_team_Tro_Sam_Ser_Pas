@@ -69,7 +69,7 @@ export const RoadmapGenerating = ({ targetProfession, isLoadingDone }: Props) =>
     }, INTERVAL);
 
     return () => clearInterval(tick);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div style={{

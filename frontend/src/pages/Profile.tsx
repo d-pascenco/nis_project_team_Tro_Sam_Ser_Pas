@@ -18,7 +18,7 @@ import {
   BookOpen, Award, Target, Sparkles, Download,
 } from "lucide-react";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 interface UserData extends AuthUser {
   roadmap: RoadmapData | null;
@@ -42,10 +42,10 @@ const downloadProfileHTML = (userData: UserData) => {
 
 type Section = "overview" | "roadmap" | "profile" | "settings";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 
-// ── Main component ────────────────────────────────────────────────────────────
+// Main component
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -62,7 +62,7 @@ const Profile = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const progressSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Load user ──────────────────────────────────────────────────────────────
+  // Load user
 
   useEffect(() => {
     if (!isAuthenticated()) { navigate("/"); return; }
@@ -89,7 +89,7 @@ const Profile = () => {
       .finally(() => setLoading(false));
   }, [navigate]);
 
-  // ── Progress save (debounced) ──────────────────────────────────────────────
+  // Progress save (debounced)
 
   const toggleStage = (stageId: number) => {
     const updated = completedStages.includes(stageId)
@@ -106,7 +106,7 @@ const Profile = () => {
     }, 600);
   };
 
-  // ── Name edit ──────────────────────────────────────────────────────────────
+  // Name edit
 
   const saveName = async () => {
     if (!nameInput.trim()) return;
@@ -153,7 +153,7 @@ const Profile = () => {
 
   const handleLogout = () => { clearToken(); goToMainSite(); };
 
-  // ── Guards ─────────────────────────────────────────────────────────────────
+  // Guards
 
   if (loading) {
     return (
@@ -180,7 +180,7 @@ const Profile = () => {
   const progressPct = totalStages > 0 ? Math.round((doneCount / totalStages) * 100) : 0;
   const currentStage = stages.find((s) => !completedStages.includes(s.id));
 
-  // ── Sidebar nav ────────────────────────────────────────────────────────────
+  // Sidebar nav
 
   const navItems: { id: Section; icon: React.ElementType; label: string }[] = [
     { id: "overview", icon: LayoutDashboard, label: "Обзор" },
@@ -189,7 +189,7 @@ const Profile = () => {
     { id: "settings", icon: Settings, label: "Настройки" },
   ];
 
-  // ── Render sections ────────────────────────────────────────────────────────
+  // Render sections
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -523,7 +523,7 @@ const Profile = () => {
     </div>
   );
 
-  // ── Layout ─────────────────────────────────────────────────────────────────
+  // Layout
 
   return (
     <div className="min-h-screen bg-background">

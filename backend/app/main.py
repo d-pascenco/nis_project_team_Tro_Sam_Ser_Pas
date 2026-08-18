@@ -4,6 +4,7 @@ import os
 import time
 import traceback
 from contextlib import asynccontextmanager
+from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,8 +22,6 @@ from app.env import load_environment
 from app.models import SharedRoadmap, User, UserForm
 from app.schemas import UserFormCreate, UserFormResponse
 
-# ── Logging setup ─────────────────────────────────────────────────────────────
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -30,12 +29,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("nextpath")
 
-# ── Config ────────────────────────────────────────────────────────────────────
-
 load_environment()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-JWT_SECRET = os.getenv("JWT_SECRET", "change-this-in-production")
+JWT_SECRET = os.getenv("JWT_SECRET", "").strip()
 JWT_ALGORITHM = "HS256"
 FRONTEND_ORIGINS = [
     o.strip()
@@ -50,8 +47,6 @@ CREATE_TABLES_ON_STARTUP = os.getenv("CREATE_TABLES_ON_STARTUP", "true").lower()
 logger.info("GOOGLE_CLIENT_ID configured: %s", bool(GOOGLE_CLIENT_ID))
 logger.info("GROQ_API_KEY configured: %s", bool(os.getenv("GROQ_API_KEY", "")))
 logger.info("FRONTEND_ORIGINS: %s", FRONTEND_ORIGINS)
-
-# ── App ───────────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -75,8 +70,6 @@ app.add_middleware(
 )
 
 
-# ── Middleware: log every request ─────────────────────────────────────────────
-
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     start = time.time()
@@ -87,8 +80,6 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-# ── Global exception handler: log traceback for every 500 ────────────────────
-
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     tb = traceback.format_exc()
@@ -98,14 +89,9 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Internal server error: {type(exc).__name__}: {exc}"},
+        content={"detail": "Internal server error"},
     )
 
-
-# ── Startup ───────────────────────────────────────────────────────────────────
-
-
-# ── Health ────────────────────────────────────────────────────────────────────
 
 @app.get("/api/health")
 def health_check(db: Session = Depends(get_db)) -> dict:
@@ -123,8 +109,6 @@ def health_check(db: Session = Depends(get_db)) -> dict:
     }
 
 
-# ── Forms ─────────────────────────────────────────────────────────────────────
-
 @app.post("/api/forms", response_model=UserFormResponse, status_code=status.HTTP_201_CREATED)
 def create_user_form(form_data: UserFormCreate, db: Session = Depends(get_db)) -> UserFormResponse:
     try:
@@ -139,8 +123,6 @@ def create_user_form(form_data: UserFormCreate, db: Session = Depends(get_db)) -
         raise HTTPException(status_code=503, detail="Database temporarily unavailable") from exc
     return UserFormResponse(id=new_form.id, message="Form data saved successfully.", created_at=new_form.created_at)
 
-
-# ── Roadmap ───────────────────────────────────────────────────────────────────
 
 def _hours_to_schedule(hours: int) -> str:
     """Преобразует часы в неделю в конкретное расписание."""
@@ -180,10 +162,10 @@ def _build_roadmap_prompt(
     hours: int,
     budget: str,
     lang: str,
-    schedule_items: list | None = None,
-    target_hard_skills: list | None = None,
-    target_soft_skills: list | None = None,
-    soft_skills: list | None = None,
+    schedule_items: Optional[list] = None,
+    target_hard_skills: Optional[list] = None,
+    target_soft_skills: Optional[list] = None,
+    soft_skills: Optional[list] = None,
     learning_style: str = "",
 ) -> str:
     schedule_hint = _hours_to_schedule(hours)
@@ -324,7 +306,7 @@ def _call_groq(prompt: str, profession: str) -> dict:
         ("llama-3.1-8b-instant",    4000),
     ]
 
-    last_exc: Exception | None = None
+    last_exc: Optional[Exception] = None
     for model, max_tok in models:
         try:
             completion = client.chat.completions.create(
@@ -380,13 +362,15 @@ def generate_roadmap(form_data: UserFormCreate) -> dict:
     return _call_groq(prompt, form_data.target_profession or "")
 
 
-# ── Auth helpers ──────────────────────────────────────────────────────────────
-
 def _create_jwt(user_id: int) -> str:
+    if not JWT_SECRET:
+        raise HTTPException(status_code=503, detail="JWT authentication is not configured")
     return jwt.encode({"sub": str(user_id)}, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def _get_user_id(authorization: str | None, db: Session) -> int:
+def _get_user_id(authorization: Optional[str]) -> int:
+    if not JWT_SECRET:
+        raise HTTPException(status_code=503, detail="JWT authentication is not configured")
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing token")
     try:
@@ -396,8 +380,6 @@ def _get_user_id(authorization: str | None, db: Session) -> int:
         raise HTTPException(status_code=401, detail="Invalid token") from exc
 
 
-# ── Google OAuth ──────────────────────────────────────────────────────────────
-
 class GoogleCredential(BaseModel):
     credential: str
 
@@ -406,24 +388,18 @@ class GoogleCredential(BaseModel):
 def google_auth(payload: GoogleCredential, db: Session = Depends(get_db)) -> dict:
     logger.info("Google auth attempt (client_id configured: %s)", bool(GOOGLE_CLIENT_ID))
 
-    id_info: dict | None = None
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="Google authentication is not configured")
 
-    # Try with audience check first
-    if GOOGLE_CLIENT_ID:
-        try:
-            id_info = google_id_token.verify_oauth2_token(payload.credential, google_requests.Request(), GOOGLE_CLIENT_ID)
-            logger.info("Token verified with audience")
-        except ValueError as exc:
-            logger.warning("Audience check failed (%s), retrying without audience", exc)
-
-    # Fallback: verify signature/expiry only
-    if id_info is None:
-        try:
-            id_info = google_id_token.verify_oauth2_token(payload.credential, google_requests.Request())
-            logger.info("Token verified without audience check")
-        except Exception as exc:
-            logger.error("Google token verification failed: %s\n%s", exc, traceback.format_exc())
-            raise HTTPException(status_code=401, detail=f"Token verification failed: {exc}") from exc
+    try:
+        id_info = google_id_token.verify_oauth2_token(
+            payload.credential,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID,
+        )
+    except ValueError as exc:
+        logger.warning("Google token verification failed: %s", exc)
+        raise HTTPException(status_code=401, detail="Invalid Google token") from exc
 
     google_id = id_info.get("sub", "")
     email = id_info.get("email", "")
@@ -444,7 +420,7 @@ def google_auth(payload: GoogleCredential, db: Session = Depends(get_db)) -> dic
     except SQLAlchemyError as exc:
         db.rollback()
         logger.error("DB error during user upsert: %s\n%s", exc, traceback.format_exc())
-        raise HTTPException(status_code=503, detail=f"Database error: {exc}") from exc
+        raise HTTPException(status_code=503, detail="Database error") from exc
 
     return {
         "token": _create_jwt(user.id),
@@ -452,11 +428,9 @@ def google_auth(payload: GoogleCredential, db: Session = Depends(get_db)) -> dic
     }
 
 
-# ── Profile ───────────────────────────────────────────────────────────────────
-
 @app.get("/api/me")
-def get_me(authorization: str | None = Header(default=None), db: Session = Depends(get_db)) -> dict:
-    user_id = _get_user_id(authorization, db)
+def get_me(authorization: Optional[str] = Header(default=None), db: Session = Depends(get_db)) -> dict:
+    user_id = _get_user_id(authorization)
     try:
         user = db.get(User, user_id)
     except SQLAlchemyError as exc:
@@ -486,11 +460,11 @@ class RecalculatePayload(BaseModel):
 @app.post("/api/me/recalculate")
 def recalculate_roadmap(
     payload: RecalculatePayload,
-    authorization: str | None = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
 ) -> dict:
     """Сохраняет обновлённые данные формы и пересчитывает роудмап через Groq."""
-    user_id = _get_user_id(authorization, db)
+    user_id = _get_user_id(authorization)
     user = db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -565,11 +539,11 @@ def recalculate_roadmap(
 @app.post("/api/me/save-form")
 def save_form_data(
     payload: RecalculatePayload,
-    authorization: str | None = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
 ) -> dict:
     """Сохраняет данные формы без пересчёта роудмапа (используется при первом логине)."""
-    user_id = _get_user_id(authorization, db)
+    user_id = _get_user_id(authorization)
     user = db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -617,10 +591,10 @@ def get_share(share_id: str, db: Session = Depends(get_db)) -> dict:
 @app.post("/api/me/roadmap")
 def save_roadmap(
     payload: RoadmapSave,
-    authorization: str | None = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
 ) -> dict:
-    user_id = _get_user_id(authorization, db)
+    user_id = _get_user_id(authorization)
     try:
         user = db.get(User, user_id)
         if not user:
@@ -642,10 +616,10 @@ class ProfileUpdate(BaseModel):
 @app.put("/api/me/profile")
 def update_profile(
     payload: ProfileUpdate,
-    authorization: str | None = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
 ) -> dict:
-    user_id = _get_user_id(authorization, db)
+    user_id = _get_user_id(authorization)
     try:
         user = db.get(User, user_id)
         if not user:
@@ -667,10 +641,10 @@ class ProgressUpdate(BaseModel):
 @app.put("/api/me/progress")
 def update_progress(
     payload: ProgressUpdate,
-    authorization: str | None = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
 ) -> dict:
-    user_id = _get_user_id(authorization, db)
+    user_id = _get_user_id(authorization)
     try:
         user = db.get(User, user_id)
         if not user:

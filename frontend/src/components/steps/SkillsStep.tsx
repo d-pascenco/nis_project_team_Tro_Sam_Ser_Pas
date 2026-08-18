@@ -21,6 +21,8 @@ interface SkillsStepProps {
   onChange: (data: Partial<SkillsStepProps["data"]>) => void;
 }
 
+type SkillField = "technicalSkills" | "softSkills" | "targetHardSkills" | "targetSoftSkills";
+
 const CURRENT_HARD = ["JavaScript", "TypeScript", "Python", "React", "Vue.js", "Node.js", "SQL", "Git", "HTML/CSS", "Docker", "AWS", "Java", "C#", "Go", "PostgreSQL"];
 const CURRENT_SOFT = ["Коммуникация", "Командная работа", "Тайм-менеджмент", "Критическое мышление", "Адаптивность", "Лидерство", "Самоорганизация"];
 const TARGET_HARD  = ["Machine Learning", "Deep Learning", "Kubernetes", "GraphQL", "TypeScript", "React Native", "Flutter", "Rust", "Scala", "Spark", "Airflow", "Terraform", "Redis", "MongoDB"];
@@ -30,7 +32,7 @@ const LEVEL_MAP: Record<number, string> = { 0: "Начальный", 25: "Баз
 const level = (n: number) => LEVEL_MAP[Math.round(n / 25) * 25] ?? "Средний";
 
 
-// ── Reusable skill block ──────────────────────────────────────────────────────
+// Reusable skill block
 
 function SkillBlock({
   title, color, bgColor, items, suggestions, placeholder, field, onChange,
@@ -41,25 +43,25 @@ function SkillBlock({
   items: string[];
   suggestions: string[];
   placeholder: string;
-  field: keyof SkillsStepProps["data"];
+  field: SkillField;
   onChange: SkillsStepProps["onChange"];
 }) {
   const [input, setInput] = useState("");
 
   const add = (val: string) => {
     const v = val.trim();
-    if (v && !items.includes(v)) onChange({ [field]: [...items, v] } as any);
+    if (v && !items.includes(v)) onChange({ [field]: [...items, v] });
     setInput("");
   };
 
-  const remove = (s: string) => onChange({ [field]: items.filter((x) => x !== s) } as any);
+  const remove = (s: string) => onChange({ [field]: items.filter((x) => x !== s) });
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const parts = e.clipboardData.getData("text").split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
     if (parts.length > 1) {
       e.preventDefault();
       const unique = parts.filter((p) => !items.includes(p));
-      onChange({ [field]: [...items, ...unique] } as any);
+      onChange({ [field]: [...items, ...unique] });
     }
   };
 
@@ -114,7 +116,7 @@ function SkillBlock({
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// Main component
 
 export const SkillsStep = ({ data, onChange }: SkillsStepProps) => {
   const [newLang, setNewLang] = useState("");
@@ -136,7 +138,7 @@ export const SkillsStep = ({ data, onChange }: SkillsStepProps) => {
   return (
     <div className="space-y-4">
 
-      {/* ── Текущие навыки ─────────────────────────────────────── */}
+      {/* Текущие навыки */}
       <FormCard title="Мои текущие навыки">
         <div className="space-y-6">
           <p className="text-sm text-muted-foreground">
@@ -166,7 +168,7 @@ export const SkillsStep = ({ data, onChange }: SkillsStepProps) => {
         </div>
       </FormCard>
 
-      {/* ── Хочу освоить ───────────────────────────────────────── */}
+      {/* Хочу освоить */}
       <FormCard title="Хочу освоить">
         <div className="space-y-6">
           <p className="text-sm text-muted-foreground">
@@ -196,7 +198,7 @@ export const SkillsStep = ({ data, onChange }: SkillsStepProps) => {
         </div>
       </FormCard>
 
-      {/* ── Языки ──────────────────────────────────────────────── */}
+      {/* Языки */}
       <FormCard title="Языки">
         <div className="space-y-4">
           {data.languages.map((lang) => (
@@ -234,7 +236,7 @@ export const SkillsStep = ({ data, onChange }: SkillsStepProps) => {
         </div>
       </FormCard>
 
-      {/* ── Стиль обучения ─────────────────────────────────────── */}
+      {/* Стиль обучения */}
       <FormCard title="Стиль обучения">
         <div className="space-y-3">
           <Label className="flex items-center gap-2 text-sm">

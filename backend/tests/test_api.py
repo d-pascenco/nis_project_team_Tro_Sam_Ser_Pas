@@ -24,17 +24,23 @@ class FakeDb:
     def rollback(self):
         pass
 
+    def execute(self, _statement):
+        return None
+
 
 def override_db():
     yield FakeDb()
 
 
 def test_health() -> None:
+    app.dependency_overrides[get_db] = override_db
     client = TestClient(app)
     response = client.get("/api/health")
+    app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json()["status"] == "ok"
+    assert response.json()["db"] == "ok"
 
 
 def test_submit_onboarding_form_with_frontend_camel_case_payload() -> None:

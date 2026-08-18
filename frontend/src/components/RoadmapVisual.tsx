@@ -9,7 +9,7 @@ import {
   Calendar, FolderOpen, ListChecks, Briefcase, Award, Sparkles,
 } from "lucide-react";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 const isResourceObj = (r: unknown): r is RoadmapResource =>
   typeof r === "object" && r !== null;
@@ -33,7 +33,7 @@ const RESOURCE_TYPE_ICON: Record<string, string> = {
   course: "📚", book: "📖", video: "🎬", practice: "⚙️", tool: "🛠", article: "📄",
 };
 
-// ── Color palette ─────────────────────────────────────────────────────────────
+// Color palette
 
 const PALETTE = [
   { border: "#c0623e", glow: "rgba(192,98,62,0.35)",  bg: "rgba(192,98,62,0.1)",  text: "#e8855a" },
@@ -43,7 +43,7 @@ const PALETTE = [
   { border: "#3ea262", glow: "rgba(62,162,98,0.35)",   bg: "rgba(62,162,98,0.1)",   text: "#5abf80" },
 ];
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// Sub-components
 
 const SectionLabel = ({ icon: Icon, label, color }: { icon: React.ElementType; label: string; color: string }) => (
   <div className="flex items-center gap-1.5 mb-2">
@@ -74,7 +74,7 @@ const Connector = ({ color, completed }: { color: string; completed?: boolean })
   </div>
 );
 
-// ── Stage node ────────────────────────────────────────────────────────────────
+// Stage node
 
 const StageNode = ({
   stage, palette, completed, isCurrent, isFirst,
@@ -481,7 +481,7 @@ const StageNode = ({
   );
 };
 
-// ── Goal node ─────────────────────────────────────────────────────────────────
+// Goal node
 
 const GoalNode = ({ roadmapData, profession }: { roadmapData: RoadmapData; profession: string }) => {
   const [open, setOpen] = useState(false);
@@ -585,7 +585,7 @@ const GoalNode = ({ roadmapData, profession }: { roadmapData: RoadmapData; profe
   );
 };
 
-// ── Start node ────────────────────────────────────────────────────────────────
+// Start node
 
 const StartNode = ({ userName, currentRole, skills, scheduleItems }: {
   userName: string;
@@ -656,7 +656,7 @@ const StartNode = ({ userName, currentRole, skills, scheduleItems }: {
   </div>
 );
 
-// ── Main dialog ───────────────────────────────────────────────────────────────
+// Main dialog
 
 interface RoadmapVisualProps {
   roadmapData: RoadmapData;
@@ -765,7 +765,7 @@ export const RoadmapVisual = ({
   );
 };
 
-// ── Trigger button ────────────────────────────────────────────────────────────
+// Trigger button
 
 export const RoadmapVisualButton = ({ onClick, size = "default" }: {
   onClick: () => void;

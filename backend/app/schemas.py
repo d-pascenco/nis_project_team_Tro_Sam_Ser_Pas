@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
@@ -20,42 +20,42 @@ class UserFormCreate(BaseModel):
     model_config = ConfigDict(populate_by_name=True, str_strip_whitespace=True)
 
     # BasicInfoStep
-    full_name: str | None = Field(default=None, max_length=255, validation_alias=AliasChoices("fullName", "full_name"))
-    age: int | None = Field(default=None, ge=0, le=120)
-    location: str | None = Field(default=None, max_length=255)
-    country: str | None = Field(default=None, max_length=100)
-    current_status: str | None = Field(default=None, max_length=100, validation_alias=AliasChoices("currentStatus", "current_status"))
-    email: str | None = Field(default=None, max_length=255)
+    full_name: Optional[str] = Field(default=None, max_length=255, validation_alias=AliasChoices("fullName", "full_name"))
+    age: Optional[int] = Field(default=None, ge=0, le=120)
+    location: Optional[str] = Field(default=None, max_length=255)
+    country: Optional[str] = Field(default=None, max_length=100)
+    current_status: Optional[str] = Field(default=None, max_length=100, validation_alias=AliasChoices("currentStatus", "current_status"))
+    email: Optional[str] = Field(default=None, max_length=255)
 
     # EducationStep
-    education: str | None = Field(default=None, max_length=255)
-    university: str | None = Field(default=None, max_length=255)
-    specialization: str | None = Field(default=None, max_length=255)
-    years_experience: int | None = Field(default=None, ge=0, le=80, validation_alias=AliasChoices("yearsExperience", "years_experience"))
-    current_role: str | None = Field(default=None, max_length=255, validation_alias=AliasChoices("currentRole", "current_role"))
-    cv_summary: str | None = Field(default=None, validation_alias=AliasChoices("cvSummary", "cv_summary"))
+    education: Optional[str] = Field(default=None, max_length=255)
+    university: Optional[str] = Field(default=None, max_length=255)
+    specialization: Optional[str] = Field(default=None, max_length=255)
+    years_experience: Optional[int] = Field(default=None, ge=0, le=80, validation_alias=AliasChoices("yearsExperience", "years_experience"))
+    current_role: Optional[str] = Field(default=None, max_length=255, validation_alias=AliasChoices("currentRole", "current_role"))
+    cv_summary: Optional[str] = Field(default=None, validation_alias=AliasChoices("cvSummary", "cv_summary"))
 
     # GoalsStep
-    target_profession: str | None = Field(default=None, max_length=255, validation_alias=AliasChoices("targetProfession", "target_profession"))
-    target_industry: str | None = Field(default=None, max_length=255, validation_alias=AliasChoices("targetIndustry", "target_industry"))
-    timeline: str | None = Field(default=None, max_length=100)
-    motivation: str | None = None
+    target_profession: Optional[str] = Field(default=None, max_length=255, validation_alias=AliasChoices("targetProfession", "target_profession"))
+    target_industry: Optional[str] = Field(default=None, max_length=255, validation_alias=AliasChoices("targetIndustry", "target_industry"))
+    timeline: Optional[str] = Field(default=None, max_length=100)
+    motivation: Optional[str] = None
     priorities: list[str] = Field(default_factory=list)
 
     # SkillsStep
     technical_skills: list[str] = Field(default_factory=list, validation_alias=AliasChoices("technicalSkills", "technical_skills"))
     soft_skills: list[str] = Field(default_factory=list, validation_alias=AliasChoices("softSkills", "soft_skills"))
     languages: list[LanguageLevel] = Field(default_factory=list)
-    learning_style: str | None = Field(default=None, max_length=255, validation_alias=AliasChoices("learningStyle", "learning_style"))
+    learning_style: Optional[str] = Field(default=None, max_length=255, validation_alias=AliasChoices("learningStyle", "learning_style"))
 
     # ConstraintsStep
-    hours_per_week: int | None = Field(default=None, ge=0, le=80, validation_alias=AliasChoices("hoursPerWeek", "hours_per_week"))
-    budget: str | None = Field(default=None, max_length=255)
-    health_considerations: str | None = Field(default=None, validation_alias=AliasChoices("healthConsiderations", "health_considerations"))
-    prefer_online: bool | None = Field(default=None, validation_alias=AliasChoices("preferOnline", "prefer_online"))
-    prefer_russian: bool | None = Field(default=None, validation_alias=AliasChoices("preferRussian", "prefer_russian"))
-    need_mentorship: bool | None = Field(default=None, validation_alias=AliasChoices("needMentorship", "need_mentorship"))
-    additional_info: str | None = Field(default=None, validation_alias=AliasChoices("additionalInfo", "additional_info"))
+    hours_per_week: Optional[int] = Field(default=None, ge=0, le=80, validation_alias=AliasChoices("hoursPerWeek", "hours_per_week"))
+    budget: Optional[str] = Field(default=None, max_length=255)
+    health_considerations: Optional[str] = Field(default=None, validation_alias=AliasChoices("healthConsiderations", "health_considerations"))
+    prefer_online: Optional[bool] = Field(default=None, validation_alias=AliasChoices("preferOnline", "prefer_online"))
+    prefer_russian: Optional[bool] = Field(default=None, validation_alias=AliasChoices("preferRussian", "prefer_russian"))
+    need_mentorship: Optional[bool] = Field(default=None, validation_alias=AliasChoices("needMentorship", "need_mentorship"))
+    additional_info: Optional[str] = Field(default=None, validation_alias=AliasChoices("additionalInfo", "additional_info"))
     schedule_items: list[dict] = Field(default_factory=list, validation_alias=AliasChoices("scheduleItems", "schedule_items"))
     target_hard_skills: list[str] = Field(default_factory=list, validation_alias=AliasChoices("targetHardSkills", "target_hard_skills"))
     target_soft_skills: list[str] = Field(default_factory=list, validation_alias=AliasChoices("targetSoftSkills", "target_soft_skills"))
@@ -86,4 +86,4 @@ class UserFormCreate(BaseModel):
 class UserFormResponse(BaseModel):
     id: int
     message: str
-    created_at: datetime | None = None
+    created_at: Optional[datetime] = None

@@ -1,12 +1,12 @@
 # NextPath Backend
 
-FastAPI-сервис: принимает данные онбординг-формы, сохраняет в PostgreSQL, генерирует персональный роудмап через Groq, управляет пользователями через Google OAuth.
+Backend NextPath принимает данные анкеты, сохраняет их в PostgreSQL, формирует персональный план через Groq API и обеспечивает авторизацию через Google OAuth.
 
 ## Стек
 
-Python 3.12, FastAPI, SQLAlchemy 2, PostgreSQL, Uvicorn, Groq API, python-jose
+Python 3.9+, FastAPI, SQLAlchemy 2, PostgreSQL, Uvicorn, Groq API, python-jose
 
-## Endpoints
+## Методы API
 
 | Метод | URL | Описание |
 |-------|-----|----------|
@@ -42,17 +42,17 @@ source venv/bin/activate
 pytest tests/ -v
 ```
 
-Тесты используют `FastAPI TestClient` с подменой зависимости базы данных (`FakeDb`). Реальная БД не нужна. Покрытие: health-endpoint, отправка формы с camelCase-полями, валидация диапазонов.
+Тесты используют `FastAPI TestClient` с подменой зависимости базы данных. Для их выполнения PostgreSQL не требуется. Проверяются состояние API, отправка анкеты с полями в camelCase и валидация числовых диапазонов.
 
 ## Структура
 
 ```
 app/
-  main.py       — все endpoints, middleware, обработчик ошибок
-  models.py     — SQLAlchemy-модели (UserForm, User, SharedRoadmap)
-  schemas.py    — Pydantic-схемы валидации
-  database.py   — подключение через DATABASE_URL
-  env.py        — загрузка .env
+  main.py       - все endpoints, middleware, обработчик ошибок
+  models.py     - SQLAlchemy-модели (UserForm, User, SharedRoadmap)
+  schemas.py    - Pydantic-схемы валидации
+  database.py   - подключение через DATABASE_URL
+  env.py        - загрузка .env
 sql/
   001_create_user_forms.sql
   002_create_users.sql
@@ -63,10 +63,10 @@ sql/
   007_alter_user_forms_add_country.sql
   008_create_shared_roadmaps.sql
 tests/
-  test_api.py   — тесты основных endpoints
+  test_api.py   - тесты основных endpoints
 ```
 
-## Production (systemd)
+## Развёртывание с systemd
 
 ```ini
 [Unit]

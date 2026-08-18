@@ -13,7 +13,7 @@ import { PROFESSION_LABELS, TIMELINE_LABELS, STATUS_LABELS, STAGE_COLORS, getRes
 import { setToken, setUser, isAuthenticated, authHeaders } from "@/lib/auth";
 import { goToCabinet } from "@/lib/urls";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 interface FormSnapshot {
   fullName?: string;
@@ -56,7 +56,7 @@ interface RoadmapPreviewProps {
   formSnapshot?: FormSnapshot;
 }
 
-// ── Static fallback stages ────────────────────────────────────────────────────
+// Static fallback stages
 
 const FALLBACK_STAGES: RoadmapStage[] = [
   { id: 1, title: "Основы программирования", duration: "4 недели", skills: ["HTML/CSS", "JavaScript", "Git"], resources: ["freeCodeCamp", "Codecademy", "YouTube"] },
@@ -66,7 +66,7 @@ const FALLBACK_STAGES: RoadmapStage[] = [
   { id: 5, title: "Подготовка к трудоустройству", duration: "4 недели", skills: ["Resume", "Interview"], resources: ["LinkedIn", "Хекслет"] },
 ];
 
-// ── Print Layout (portal — renders outside #root) ─────────────────────────────
+// Print Layout (portal — renders outside #root)
 
 const PrintLayout = React.forwardRef<HTMLDivElement, {
   userData: RoadmapPreviewProps["userData"];
@@ -245,7 +245,7 @@ const PrintLayout = React.forwardRef<HTMLDivElement, {
 ));
 PrintLayout.displayName = "PrintLayout";
 
-// ── Main component ────────────────────────────────────────────────────────────
+// Main component
 
 export const RoadmapPreview = ({
   userData, roadmapData, isLoading, hideActions, formSnapshot,

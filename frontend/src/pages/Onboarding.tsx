@@ -104,7 +104,7 @@ const Onboarding = () => {
     }
   };
 
-  // ── Переход к роудмапу — управляется здесь, не внутри RoadmapGenerating ──────
+  // Переход к роудмапу — управляется здесь, не внутри RoadmapGenerating
   // Когда API завершён, ждём MIN_MS с момента старта генерации, потом показываем роудмап
   useEffect(() => {
     if (!showGenerating || roadmapLoading) return;         // ещё не готово

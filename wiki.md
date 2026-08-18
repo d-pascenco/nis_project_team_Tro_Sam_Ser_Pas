@@ -2,7 +2,7 @@
 
 ## Overview
 
-В рамках проекта был создан сайт (фронтенд) на платформе https://lovable.dev, развёрнут хост на Oracle Cloud Free Tier, SSH, подключён Cloudflare (проксирование трафика), база данных и бэкенд на python.
+В рамках проекта разработаны frontend на React и backend на FastAPI, настроены PostgreSQL, Cloudflare и сервер на Oracle Cloud Free Tier.
 Ниже описана подробная последовательность действий команды, возникшие ошибки и способы их устранения.
 
 ## 1. Создание инстанса в Oracle Cloud

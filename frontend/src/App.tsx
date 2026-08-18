@@ -15,24 +15,22 @@ import { Logo } from "./components/Logo";
 import { IS_CABINET_DOMAIN, IS_DEV, CABINET_ORIGIN } from "./lib/urls";
 import { isAuthenticated, setToken, setUser } from "./lib/auth";
 
-// ── Cross-subdomain handshake ─────────────────────────────────────────────────
+// Авторизация между поддоменами
 // nextpath.su и my.nextpath.su имеют разные localStorage.
-// Токен передаётся через ?t= при редиректе — сохраняем здесь до первого рендера.
+// Токен передаётся во фрагменте URL, который не отправляется серверу.
 if (IS_CABINET_DOMAIN) {
-  const params = new URLSearchParams(window.location.search);
-  const urlToken = params.get("t");
-  console.log("[App] cabinet domain. urlToken:", !!urlToken, "authed:", isAuthenticated());
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const urlToken = params.get("token");
   if (urlToken) {
     setToken(urlToken);
     window.history.replaceState({}, "", window.location.pathname);
-    console.log("[App] token saved from URL");
   }
 }
 
 const queryClient = new QueryClient();
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
-// ── Страница входа для my.nextpath.su ─────────────────────────────────────────
+// Страница входа для my.nextpath.su
 // Показывается когда пользователь открывает кабинет без авторизации.
 // Авторизация происходит прямо здесь, без редиректов.
 const CabinetLoginPage = ({ onAuth }: { onAuth: () => void }) => {
@@ -53,7 +51,6 @@ const CabinetLoginPage = ({ onAuth }: { onAuth: () => void }) => {
       if (!res.ok) throw new Error(body.detail || `Ошибка ${res.status}`);
       setToken(body.token);
       setUser(body.user);
-      console.log("[App] login success on cabinet domain");
       onAuth();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Ошибка входа");
@@ -119,7 +116,7 @@ const CabinetLoginPage = ({ onAuth }: { onAuth: () => void }) => {
   );
 };
 
-// ── Охрана кабинета ───────────────────────────────────────────────────────────
+// Проверка авторизации в кабинете
 // Вместо редиректа показывает страницу входа прямо на my.nextpath.su.
 const CabinetGuard = ({ children }: { children: React.ReactNode }) => {
   const [authed, setAuthed] = useState(isAuthenticated());
@@ -129,7 +126,7 @@ const CabinetGuard = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// ── Редирект /profile → my.nextpath.su ───────────────────────────────────────
+// Перенаправление /profile на поддомен кабинета
 const ProfileRedirect = () => {
   if (!IS_DEV) {
     window.location.replace(CABINET_ORIGIN + "/profile");
@@ -138,7 +135,7 @@ const ProfileRedirect = () => {
   return <Profile />;
 };
 
-// ── Маршруты my.nextpath.su ───────────────────────────────────────────────────
+// Маршруты my.nextpath.su
 const CabinetRoutes = () => (
   <Routes>
     <Route path="/" element={<Navigate to="/profile" replace />} />
@@ -148,7 +145,7 @@ const CabinetRoutes = () => (
   </Routes>
 );
 
-// ── Маршруты nextpath.su ──────────────────────────────────────────────────────
+// Маршруты nextpath.su
 const MainRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
